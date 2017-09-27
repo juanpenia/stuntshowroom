@@ -633,7 +633,7 @@ CMD:playmusic(playerid, params[]) // Plays music for every online player.
 		}
 		new name[MAX_PLAYER_NAME];
 		GetPlayerName(playerid, name, MAX_PLAYER_NAME);
-		SendClientMessageToAll(-1, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}is now playing a song.", name, playerid));
+		SendClientMessageToAll(0x00BFFFFF, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}is now playing a song.", name, playerid));
 	}
 	return 1;
 }
