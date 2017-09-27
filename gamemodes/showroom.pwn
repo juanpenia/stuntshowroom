@@ -31,6 +31,7 @@ enum
 };
 
 new Player[MAX_PLAYERS][e_Player];
+new PlayerText: CarName;
 
 new aVehicleNames[][] =
 {
@@ -68,7 +69,7 @@ new aVehicleNames[][] =
 main()
 {
 	print("-------------------------------");
-	print(" Showroom v1.0 Loaded :) ");
+	print(" Showroom v1.0.1 Loaded :) ");
 	print("-------------------------------");
 }
 
@@ -76,7 +77,7 @@ main()
 public OnGameModeInit()
 {
 	AntiDeAMX();
-	SetGameModeText("Showroom v1.0");
+	SetGameModeText("Showroom v1.0.1");
 	UsePlayerPedAnims();
 	DisableInteriorEnterExits();
 	
@@ -125,7 +126,7 @@ public OnGameModeInit()
 public OnGameModeExit()
 {
 	print("-------------------------------");
-	print("Stunt Showroom v1.0 Unloaded :(");
+	print("Stunt Showroom v1.0.1 Unloaded :(");
 	print("-------------------------------");
 	return 1;
 }
@@ -153,6 +154,7 @@ public OnPlayerConnect(playerid)
 	RemoveBuildingForPlayer(playerid, 1226, 1965.9219, -2134.5859, 16.3828, 0.25); // A lamp that interrups with the bikes.
 	PlayAudioStreamForPlayer(playerid, "http://vps433560.ovh.net/123/intro.mp3");
 	SomeSpam(playerid);
+	CarNameTD(playerid);
 	SendClientMessage(playerid, 0x00BFFFFF, "Welcome to {FFFFFF}A Stunt Server.");
 	SendClientMessage(playerid, 0x87CEFAFF, "Useful commands: /v, /repair, /nitro, /hydraulics (/hs).");
 	SendClientMessage(playerid, 0x87CEFAFF, "Type /cmds to see more useful commands!");
@@ -176,9 +178,34 @@ public OnPlayerSpawn(playerid)
 
 public OnPlayerCommandPerformed(playerid, cmdtext[], success)
 {
-	new name[20];
-	GetPlayerName(playerid, name, 20);
+	new name[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, name, MAX_PLAYER_NAME);
 	if(!success) return SendClientMessage(playerid, 0xFF0000FF, "You have inserted an invalid command. Check /cmds to get a list of commands.");
+	return 1;
+}
+
+forward CarTD(playerid);
+
+public CarTD(playerid)
+{
+	PlayerTextDrawHide(playerid, CarName);
+}
+
+public OnPlayerStateChange(playerid, newstate, oldstate)
+{
+	if(newstate ==  PLAYER_STATE_DRIVER || newstate == PLAYER_STATE_PASSENGER)
+	{
+		new str[60];
+		new vehicleid = GetPlayerVehicleID(playerid);
+		new model = GetVehicleModel(vehicleid); //get the vehicle model of the player's vehicle
+		
+		format(str, sizeof(str), "~h~~r~%s", aVehicleNames[model - 400]); //store the vehicle's name
+		{
+			PlayerTextDrawSetString(playerid, CarName, str);
+			PlayerTextDrawShow(playerid, CarName);
+			SetTimer("CarTD", 3000, false);
+		}
+	}
 	return 1;
 }
 
@@ -213,9 +240,9 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	if(IsPlayerInAnyVehicle(playerid) && GetPlayerState(playerid) != PLAYER_STATE_DRIVER) return SendClientMessage(playerid, -1, "Can't spawn a vehicle while you are not the driver.");
 
 	new veh;
-	new playername[20];
+	new playername[MAX_PLAYER_NAME];
 		
-	GetPlayerName(playerid, playername, 20);
+	GetPlayerName(playerid, playername, MAX_PLAYER_NAME);
 
 	if(IsNumeric(params))
 		veh = strval(params);
@@ -255,14 +282,10 @@ CMD:car(playerid, params[])
 
 CMD:nitro(playerid, params[]) // Adds nitro to a vehicle.
 {
-	new carro = GetPlayerVehicleID(playerid); // carro = a slang for car in spanish.
-	
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be inside a vehicle in order to add Nitro.");
-	if (GetPlayerVehicleID(playerid) == carro)
-	{
-		AddVehicleComponent(carro, 1010); // Nitro
-		SendClientMessage(playerid, 0x00BFFFFF, "Nitro added.");
-	}
+	new carro = GetPlayerVehicleID(playerid); // carro = a slang for car in spanish.
+	AddVehicleComponent(carro, 1010); // Nitro
+	SendClientMessage(playerid, 0x00BFFFFF, "Nitro added.");
 	return 1;
 }
 
@@ -273,14 +296,10 @@ CMD:nos(playerid, params[]) // Does the same than /nitro
 
 CMD:hydraulics(playerid, params[]) // Adds hydraulics to a vehicle.
 {
-	new carro = GetPlayerVehicleID(playerid);
-	
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be inside a vehicle in order to add Hydraulics.");
-	if (GetPlayerVehicleID(playerid) == carro)
-	{
-		AddVehicleComponent(carro, 1087); // hydraulics
-		SendClientMessage(playerid, 0x00BFFFFF, "Hydraulics added.");
-	}
+	new carro = GetPlayerVehicleID(playerid);
+	AddVehicleComponent(carro, 1087); // hydraulics
+	SendClientMessage(playerid, 0x00BFFFFF, "Hydraulics added.");
 	return 1;
 }
 
@@ -293,6 +312,7 @@ CMD:repair(playerid, params[]) // Repairs the player's vehicle.
 {
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You are not in a vehicle!");
 	RepairVehicle(GetPlayerVehicleID(playerid));
+	SetVehicleHealth(GetPlayerVehicleID(playerid), 10000);
 	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle has been repaired!");
 	return 1;
 }
@@ -306,6 +326,7 @@ CMD:respawn(playerid, params[]) // Takes the player back to spawn and refills th
 		SetVehicleZAngle(playerveh,180.0000);
 		SetPlayerHealth(playerid, 100);
 		RepairVehicle(playerveh);
+		SetVehicleHealth(GetPlayerVehicleID(playerid), 10000);
 	}
 	else
 	{
@@ -322,7 +343,7 @@ CMD:fix(playerid, params[]) // Does the same than /repair
 CMD:goto(playerid, params[]) // Teleports the player to another player.
 {
 	new targetid;
-	new name[20], string[128];
+	new name[MAX_PLAYER_NAME], string[128];
 	
 	if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/goto <playerid/name>");
 	if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player isn't connected.");
@@ -336,7 +357,7 @@ CMD:goto(playerid, params[]) // Teleports the player to another player.
 	
 	SetPlayerPos(playerid, target_x, target_y +1, target_z);
 	
-	GetPlayerName(targetid, name, 20);
+	GetPlayerName(targetid, name, MAX_PLAYER_NAME);
 	
 	format(string, 128, "{00BFFF}You have teleported to {FFFFFF}%s's (id: %d){00BFFF} location.", name, targetid);
 	return 1;
@@ -355,7 +376,8 @@ CMD:hp(playerid, params[]) // Does the same than /heal
 
 CMD:changelog(playerid, params[]) // Shows a log with the changes done in the gamemode
 {
-	Dialog_Show(playerid, changelog_dialog, DIALOG_STYLE_MSGBOX, "Changelog", "{00BFFF}Showroom {FFFFFF}1.0:\n - Initial Release.", "Close", "");
+	Dialog_Show(playerid, changelog_dialog, DIALOG_STYLE_MSGBOX, "Changelog", "{00BFFF}Showroom {FFFFFF}1.0.1:\n - Code improvement and optimization. Thanks to Dayron for this. \n\
+																				- A textdraw with the vehicle name is now shown when a player gets on a vehicle.", "Close", "");
 	return 1;
 }
 
@@ -383,7 +405,8 @@ CMD:flip(playerid, params[])
 	GetVehicleZAngle(vehid, Ang);
 	SetVehicleZAngle(vehid, Ang);
 	RepairVehicle(vehid);
-	SendClientMessage(playerid, 0x00BFFFFF, "Vehicle Flipped.");
+	SetVehicleHealth(vehid, 10000);
+	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle has been flipped.");
 	return 1;
 }
 
@@ -464,9 +487,9 @@ CMD:makeadmin(playerid, params[])
 		if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/makeadmin <id/playername>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		Player[targetid][IsAdmin] = 1;
-		new adminname[20], target[20];
-		GetPlayerName(playerid, adminname, 20);
-		GetPlayerName(targetid, target, 20);
+		new adminname[MAX_PLAYER_NAME], target[MAX_PLAYER_NAME];
+		GetPlayerName(playerid, adminname, MAX_PLAYER_NAME);
+		GetPlayerName(targetid, target, MAX_PLAYER_NAME);
 		SendClientMessage(playerid, 0x00BFFFFF, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}has made you admin.", adminname, playerid));
 		SendClientMessage(playerid, 0x00BFFFFF, sprintf("You have made {FFFFFF}%s's (id:%i) {00BFFF}an admin.", target, targetid));
 	}
@@ -482,9 +505,9 @@ CMD:demote(playerid, params[])
 		if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/demote <id/playername>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		Player[targetid][IsAdmin] = 0;
-		new adminname[20], target[20];
-		GetPlayerName(playerid, adminname, 20);
-		GetPlayerName(targetid, target, 20);
+		new adminname[MAX_PLAYER_NAME], target[MAX_PLAYER_NAME];
+		GetPlayerName(playerid, adminname, MAX_PLAYER_NAME);
+		GetPlayerName(targetid, target, MAX_PLAYER_NAME);
 		SendClientMessage(playerid, -1, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}has demoted you.", adminname, playerid));
 		SendClientMessage(playerid, -1, sprintf("You have demoted {FFFFFF}%s's (id:%i).", target, targetid));
 	}
@@ -509,7 +532,7 @@ CMD:ip(playerid, params[])
 {
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) // only admins, sorry not sorry :-*
 	{
-		new pip[16], string[128], pname[20];
+		new pip[16], string[128], pname[MAX_PLAYER_NAME];
 		new targetid;
 		if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/ip <id/playername>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
@@ -572,9 +595,9 @@ CMD:settime(playerid, params[]) // Sets a player time.
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		if(hour > 24) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: Invalid Time.");
 		SetPlayerTime(targetid, hour, 0); //
-		new name[20], aname[20];
-		GetPlayerName(targetid, name, 20);
-		GetPlayerName(playerid, aname, 20);
+		new name[MAX_PLAYER_NAME], aname[MAX_PLAYER_NAME];
+		GetPlayerName(targetid, name, MAX_PLAYER_NAME);
+		GetPlayerName(playerid, aname, MAX_PLAYER_NAME);
 		SendClientMessage(playerid, -1, sprintf("You have set %s (id: %d) time to: %d", name, targetid, hour));
 		SendClientMessage(targetid, -1, sprintf("%s (id: %d) has set your time to: %d", aname, playerid, hour));
 	}
@@ -589,9 +612,9 @@ CMD:setweather(playerid, params[]) // Sets a player weather
 		if(sscanf(params, "ud", targetid, weather)) return SendClientMessage(playerid,  0x00BFFFFF, "USAGE: {FFFFFF}/setweather <id/playername> <weather>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		SetPlayerWeather(targetid, weather); //
-		new name[20], aname[20];
-		GetPlayerName(targetid, name, 20);
-		GetPlayerName(playerid, aname, 20);
+		new name[MAX_PLAYER_NAME], aname[MAX_PLAYER_NAME];
+		GetPlayerName(targetid, name, MAX_PLAYER_NAME);
+		GetPlayerName(playerid, aname, MAX_PLAYER_NAME);
 		SendClientMessage(playerid, -1, sprintf("You have set %s (id: %d) weather to: %d", name, targetid, weather));
 		SendClientMessage(targetid, -1, sprintf("%s (id: %d) has set your weather to: %d", aname, playerid, weather));
 	}
@@ -599,16 +622,17 @@ CMD:setweather(playerid, params[]) // Sets a player weather
 }
 
 
-CMD:playmusic(playerid, params[])
+CMD:playmusic(playerid, params[]) // Plays music for every online player.
 {
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
 	{
 		for(new everyone = 0; everyone < MAX_PLAYERS; everyone++)
 		{
-			PlayAudioStreamForPlayer(everyone, params);
+			if(!IsPlayerNPC(everyone) || IsPlayerConnected(everyone)) {
+				PlayAudioStreamForPlayer(everyone, params); }
 		}
-		new name[20];
-		GetPlayerName(playerid, name, 20);
+		new name[MAX_PLAYER_NAME];
+		GetPlayerName(playerid, name, MAX_PLAYER_NAME);
 		SendClientMessageToAll(-1, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}is now playing a song.", name, playerid));
 	}
 	return 1;
@@ -616,13 +640,14 @@ CMD:playmusic(playerid, params[])
 
 
 
-CMD:stopmusicforall(playerid, params[]) // for(new admins = 0; admins < MAX_PLAYERS; admins++)
+CMD:stopmusicforall(playerid, params[]) // Stops the music for every player.
 {
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
 	{
 		for(new everyone = 0; everyone < MAX_PLAYERS; everyone++)
 		{
-			StopAudioStreamForPlayer(everyone);
+			if(!IsPlayerNPC(everyone) || IsPlayerConnected(everyone)) {
+				StopAudioStreamForPlayer(everyone); }
 		}
 	}
 	return 1;
@@ -630,21 +655,27 @@ CMD:stopmusicforall(playerid, params[]) // for(new admins = 0; admins < MAX_PLAY
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SomeSpam(playerid)
+SomeSpam(playerid, spam = 10) // The client messages shown when a player connects
 {
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
-	SendClientMessage(playerid, 0x000000FF, "");
+    for(new i; i != spam; i++)
+        SendClientMessage(playerid, 0x000000FF, "");
+}  
+
+CarNameTD(playerid)
+{
+	//new model = GetVehicleModel(vehicleid);
+	CarName = CreatePlayerTextDraw(playerid, 600.0, 420.0, "ERROR");
+	PlayerTextDrawColor(playerid, CarName, 0x000000FF);
+	//PlayerTextDrawBackgroundColor(playerid, CarName, 0x000000FF);
+	PlayerTextDrawAlignment(playerid, CarName , 2); // Align the textdraw text in the center
+	PlayerTextDrawSetShadow(playerid, CarName, 1);
+	PlayerTextDrawLetterSize(playerid, CarName, 0.5, 2.0);
+	PlayerTextDrawFont(playerid, CarName, 3);
+	PlayerTextDrawSetProportional(playerid, CarName, 1);
+	PlayerTextDrawSetOutline(playerid, CarName, 0);
 }
 
-stock GetVehicleModelID(vehiclename[])
+stock GetVehicleModelID(vehiclename[]) // From AttDef 2.7 Code. Used on /v.
 {
 	for(new i = 0; i < 211; i++){
         if(strfind(aVehicleNames[i], vehiclename, true) != -1)
@@ -652,9 +683,12 @@ stock GetVehicleModelID(vehiclename[])
     } return -1;
 }
 
-stock IsNumeric(string[]){
+/*stock IsNumeric(string[]){ // From AttDef 2.7 Code. Used on /v.
     for (new i = 0, j = strlen(string); i < j; i++){
     	if (string[i] > '9' || string[i] < '0') return 0;
     }
     return 1;
-}
+}*/
+
+IsNumeric(string[])
+    return !sscanf(string, "{i}");
