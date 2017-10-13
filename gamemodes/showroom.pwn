@@ -2,16 +2,16 @@
 
 
 #include <a_samp> 			// by SA:MP Dev Team ♥
+#include <fixes>			// by SA:MP Community (am i rite?) ♥
 #include <zcmd>      		// by Zeex ♥
 #include <sscanf2>   		// by Y_Less ♥
+//#include <foreach>
 #include <easyDialog> 		// by Emmet_ ♥
 //#include <streamer> 		// by Incognito ♥
 #include <strlib> 			// by Slice ♥
 #include <crashdetect> 		// by 0x5A656578 ♥
 
-// Dialogs: 1000 (commands), 1001 (changelog) // don't mind about this, we are using easyDialog now.
-
-
+new aPWD[]="1234"; // The admin password. It's highly recommended to change this. Try using 10 characters as maximum.
 
 AntiDeAMX()
 {
@@ -27,10 +27,12 @@ enum
 	e_Player
 {
 	LastVehicle,
-	IsAdmin
+	IsAdmin,
+	PMread
 };
 
 new Player[MAX_PLAYERS][e_Player];
+new bool:IsSpawned[MAX_PLAYERS];
 new PlayerText: CarName;
 
 new aVehicleNames[][] =
@@ -69,7 +71,7 @@ new aVehicleNames[][] =
 main()
 {
 	print("-------------------------------");
-	print(" Showroom v1.0.1 Loaded :) ");
+	print(" Showroom v1.1 Loaded :) ");
 	print("-------------------------------");
 }
 
@@ -77,7 +79,7 @@ main()
 public OnGameModeInit()
 {
 	AntiDeAMX();
-	SetGameModeText("Showroom v1.0.1");
+	SetGameModeText("Showroom v1.1");
 	UsePlayerPedAnims();
 	DisableInteriorEnterExits();
 	
@@ -126,7 +128,7 @@ public OnGameModeInit()
 public OnGameModeExit()
 {
 	print("-------------------------------");
-	print("Stunt Showroom v1.0.1 Unloaded :(");
+	print("Stunt Showroom v1.1 Unloaded :(");
 	print("-------------------------------");
 	return 1;
 }
@@ -145,6 +147,7 @@ PoxerSuperClassSelection(playerid)
 public OnPlayerRequestClass(playerid, classid)
 {
 	PoxerSuperClassSelection(playerid);
+	IsSpawned[playerid] = false;
 	return 1;
 }
 
@@ -159,6 +162,8 @@ public OnPlayerConnect(playerid)
 	SendClientMessage(playerid, 0x87CEFAFF, "Useful commands: /v, /repair, /nitro, /hydraulics (/hs).");
 	SendClientMessage(playerid, 0x87CEFAFF, "Type /cmds to see more useful commands!");
 	SendDeathMessage(INVALID_PLAYER_ID, playerid, 200);
+	Player[playerid][PMread] = 1;
+	IsSpawned[playerid] = false;
 	return 1;
 }
 
@@ -173,14 +178,23 @@ public OnPlayerSpawn(playerid)
 	SetPlayerInterior(playerid, 0);
 	StopAudioStreamForPlayer(playerid);
 	SetPlayerTime(playerid, 12, 00);
+	IsSpawned[playerid] = true;
 	return 1;
 }
 
 public OnPlayerCommandPerformed(playerid, cmdtext[], success)
 {
-	new name[MAX_PLAYER_NAME];
-	GetPlayerName(playerid, name, MAX_PLAYER_NAME);
 	if(!success) return SendClientMessage(playerid, 0xFF0000FF, "You have inserted an invalid command. Check /cmds to get a list of commands.");
+	return 1;
+}
+
+public OnPlayerCommandReceived(playerid,cmdtext[])
+{
+	if(IsSpawned[playerid] == false) // If the player is not spawned, then he can't use commands.
+	{
+		SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must spawn in order to use commands.");
+		return 0;
+	}
 	return 1;
 }
 
@@ -209,6 +223,18 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 	return 1;
 }
 
+public OnPlayerText(playerid, text[])
+{
+	if((IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) && (text[0] == '@' )) // Admin chat.
+	{
+		new string[160];
+		format(string, sizeof(string), "| {FFFFFF}@ {00BFFF}| ADMIN CHAT: {FFFFFF}%s (id: %d): %s", PlayerName(playerid), playerid, text[1]);
+		SendMessageToAdmins(string);
+		return 0;
+	}
+	return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////// CMDS HERE ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -224,6 +250,7 @@ CMD:cmds(playerid, params[]) // A list of the commands and what they do.
 																	/godcar (/gc)\n\
 																	/goto \n\
 																	/heal (/hp) \n\
+																	/pm \n\
 																	/respawn \n\
 																	/weather \n\
 																	/time \n\
@@ -240,9 +267,6 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	if(IsPlayerInAnyVehicle(playerid) && GetPlayerState(playerid) != PLAYER_STATE_DRIVER) return SendClientMessage(playerid, -1, "Can't spawn a vehicle while you are not the driver.");
 
 	new veh;
-	new playername[MAX_PLAYER_NAME];
-		
-	GetPlayerName(playerid, playername, MAX_PLAYER_NAME);
 
 	if(IsNumeric(params))
 		veh = strval(params);
@@ -263,7 +287,7 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	new MyVehicle = CreateVehicle(veh, Pos[0], Pos[1], Pos[2], Pos[3], -1, -1, -1); //Creates the specific vehicle u were looking for (veh).
 
 	new plate[32];
-	format(plate, sizeof(plate), "%s", playername);
+	format(plate, sizeof(plate), "%s", PlayerName(playerid));
 	SetVehicleNumberPlate(MyVehicle, plate);
 	SetVehicleToRespawn(MyVehicle);
 
@@ -342,8 +366,7 @@ CMD:fix(playerid, params[]) // Does the same than /repair
 
 CMD:goto(playerid, params[]) // Teleports the player to another player.
 {
-	new targetid;
-	new name[MAX_PLAYER_NAME], string[128];
+	new targetid, string[128];
 	
 	if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/goto <playerid/name>");
 	if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player isn't connected.");
@@ -357,9 +380,8 @@ CMD:goto(playerid, params[]) // Teleports the player to another player.
 	
 	SetPlayerPos(playerid, target_x, target_y +1, target_z);
 	
-	GetPlayerName(targetid, name, MAX_PLAYER_NAME);
 	
-	format(string, 128, "{00BFFF}You have teleported to {FFFFFF}%s's (id: %d){00BFFF} location.", name, targetid);
+	format(string, 128, "{00BFFF}You have teleported to {FFFFFF}%s's (id: %d){00BFFF} location.", PlayerName(targetid), targetid);
 	return 1;
 }
 
@@ -376,9 +398,15 @@ CMD:hp(playerid, params[]) // Does the same than /heal
 
 CMD:changelog(playerid, params[]) // Shows a log with the changes done in the gamemode
 {
-	Dialog_Show(playerid, changelog_dialog, DIALOG_STYLE_MSGBOX, "Changelog", "{00BFFF}Showroom {FFFFFF}1.0.1:\n - Code improvement and optimization. Thanks to Dayron for this. \n\
-																				- A textdraw with the vehicle name is now shown when a player gets on a vehicle.", "Close", "");
-	return 1;
+	Dialog_Show(playerid, changelog_dialog, DIALOG_STYLE_MSGBOX, "Changelog", "{00BFFF}Showroom {FFFFFF}1.1:\n- Added personal messages (/pm) \n\
+																				- Colors were fixed in some client messages \n\
+																				- Improved admin checks on some commands \n\
+																				- Admins now have admin chat \n\
+																				- Added more admin cmds (kick, ban, etc) \n\
+																				- Players now aren't able to use commands if they aren't spawned \n\
+																				- Fixed some commands syntax \n\
+																				- More code improvement and optimization", "Close", "");
+	return 1; 
 }
 
 CMD:credits(playerid, params[])
@@ -448,7 +476,7 @@ CMD:8track(playerid, params[]) // The CMD I've used to get into the track and ma
 	return 1;
 }
 
-CMD:time(playerid, params[]) // add message: you set target's time to %s , maybe admin blabla setyourtime to %s
+CMD:time(playerid, params[]) // Sets a player time, to be used by regulars.
 {
 	new time;
 	
@@ -463,7 +491,7 @@ CMD:time(playerid, params[]) // add message: you set target's time to %s , maybe
 	return 1;
 }
 
-CMD:weather(playerid, params[]) // add message: you set target's time to %s , maybe admin blabla setyourtime to %s
+CMD:weather(playerid, params[]) // Sets a player weather, to be used by regulars.
 {
 	new weather;
 	if(isnull(params)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/weather <weatherid>");
@@ -471,10 +499,32 @@ CMD:weather(playerid, params[]) // add message: you set target's time to %s , ma
 	{
 		weather = strval(params);
 	}
-	SetPlayerWeather(playerid, weather); //
+	SetPlayerWeather(playerid, weather);
 	return 1;
 }
 
+CMD:pm(playerid, params[]) // Personal message, PM read needs more testing.
+{
+	new targetid, msg[128];
+	if(sscanf(params, "us[128]", targetid, msg)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/pm <id/playername> <message>");
+	if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
+	SendClientMessage(playerid, 0x00BFFFFF, sprintf("PM sent to {FFFFFF}%s (id: %d){00BFFF}.", PlayerName(targetid), targetid));
+	SendClientMessage(targetid, 0x00BFFFFF, sprintf("PM from {FFFFFF}%s (id: %d): %s", PlayerName(playerid), playerid, msg));
+	PlayerPlaySound(targetid, 1038, 0, 0 ,0);
+
+	for(new admins = 0; admins < MAX_PLAYERS; admins++)
+	{
+		if(IsPlayerAdmin(admins) || Player[admins][IsAdmin] == 1) 
+		{
+			if(Player[admins][PMread] == 1)
+			{
+				if((Player[playerid][IsAdmin] == 1 || Player[targetid][IsAdmin] == 1) || IsPlayerAdmin(playerid) || IsPlayerAdmin(targetid)) return -1;
+				SendClientMessage(admins, -1, sprintf("PM from %s (id: %d) to %s (id: %d): %s", PlayerName(playerid), playerid, PlayerName(targetid), targetid, msg)); 
+			}
+		}
+	}
+	return 1;
+}
 ///////////////////////// ADMIN CMDS ////////////////////////
 
 
@@ -486,12 +536,11 @@ CMD:makeadmin(playerid, params[])
 		
 		if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/makeadmin <id/playername>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
+		if(Player[targetid][IsAdmin] == 1) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target is an admin already.");
 		Player[targetid][IsAdmin] = 1;
-		new adminname[MAX_PLAYER_NAME], target[MAX_PLAYER_NAME];
-		GetPlayerName(playerid, adminname, MAX_PLAYER_NAME);
-		GetPlayerName(targetid, target, MAX_PLAYER_NAME);
-		SendClientMessage(playerid, 0x00BFFFFF, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}has made you admin.", adminname, playerid));
-		SendClientMessage(playerid, 0x00BFFFFF, sprintf("You have made {FFFFFF}%s's (id:%i) {00BFFF}an admin.", target, targetid));
+		SendClientMessage(targetid, 0x00BFFFFF, sprintf("Admin {FFFFFF}%s (id: %i) {00BFFF}has made you admin.", PlayerName(playerid), playerid));
+		SendClientMessage(playerid, 0x00BFFFFF, sprintf("You have made {FFFFFF}%s's (id: %i) {00BFFF}an admin.", PlayerName(targetid), targetid));
+		SendClientMessage(targetid, 0x00BFFFFF, "Check {FFFFFF}/acmds {00BFFF} to find out your new commands.");
 	}
 	return 1;
 }
@@ -504,12 +553,38 @@ CMD:demote(playerid, params[])
 		
 		if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/demote <id/playername>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
+		if(Player[targetid][IsAdmin] == 0) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target has no admin level already.");
 		Player[targetid][IsAdmin] = 0;
-		new adminname[MAX_PLAYER_NAME], target[MAX_PLAYER_NAME];
-		GetPlayerName(playerid, adminname, MAX_PLAYER_NAME);
-		GetPlayerName(targetid, target, MAX_PLAYER_NAME);
-		SendClientMessage(playerid, -1, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}has demoted you.", adminname, playerid));
-		SendClientMessage(playerid, -1, sprintf("You have demoted {FFFFFF}%s's (id:%i).", target, targetid));
+		SendClientMessage(targetid, 0x00BFFFFF, sprintf("Admin {FFFFFF}%s (id: %i) {00BFFF}has demoted you.", PlayerName(playerid), playerid));
+		SendClientMessage(playerid, 0x00BFFFFF, sprintf("You have demoted {FFFFFF}%s's (id: %i).", PlayerName(targetid), targetid));
+	}
+	return 1;
+}
+
+CMD:adminpw(playerid, params[]) // CMD to login as admin, so you don't have to login to RCON everytime.
+{
+	new pwd[10];
+	if(sscanf(params, "s[10]", pwd)) return 0;
+	if(strcmp(pwd, aPWD)) return 0;
+	SendClientMessage(playerid, 0x00BFFFFF, "Admin level has been set.");
+	Player[playerid][IsAdmin] = 1;
+	return 1;
+}
+
+CMD:readpms(playerid, params[]) // Toggle On/Off PM read.
+{
+	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
+	{
+		if(Player[playerid][PMread] == 0)
+		{
+			Player[playerid][PMread] = 1;
+			SendClientMessage(playerid, 0x00BFFFFF, "PM read enabled.");
+		}
+		else if(Player[playerid][PMread] == 1)
+		{
+			Player[playerid][PMread] = 0;
+			SendClientMessage(playerid, 0x00BFFFFF, "PM read disabled.");
+		}
 	}
 	return 1;
 }
@@ -521,53 +596,57 @@ CMD:dveh(playerid, params[]) // Destroys a vehicle, this is in case someone bugs
 		new vehid;
 		if(sscanf(params, "d", vehid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/dveh <vehicleid>");
 		DestroyVehicle(vehid);
-	
-		//if(sucess) return SendClientMessage(playerid, -1, "Success");
-		//else return SendClientMessage(playerid, -1, "Ouch!");
 	}
 	return 1;
 }
 
-CMD:ip(playerid, params[])
+CMD:ip(playerid, params[]) // Check a player's IP address
 {
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) // only admins, sorry not sorry :-*
 	{
-		new pip[16], string[128], pname[MAX_PLAYER_NAME];
+		new pip[16], string[128];
 		new targetid;
 		if(sscanf(params, "u", targetid)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/ip <id/playername>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		GetPlayerIp(targetid, pip, sizeof(pip));
-		GetPlayerName(targetid, pname, sizeof(pname));
-		format(string, 128, "Player: %s (id:%d). IP: %s", pname, targetid, pip);
+		format(string, 128, "{00BFFF}Player: {FFFFFF}%s (id:%d). {00BFFF}IP: {FFFFFF}%s", PlayerName(targetid), targetid, pip);
 		SendClientMessage(playerid, -1, string);
 	}
 	return 1;
 }
 
-CMD:acmds(playerid, params[]) //a list of the admin cmds //add /restart
+
+CMD:acmds(playerid, params[]) //a list of the admin cmds 
 {
-	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) // only admins, sorry not sorry :-*
+	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) // only admins, duh.
 	{	
-		Dialog_Show(playerid, acmds_dialog, DIALOG_STYLE_MSGBOX, "Admin Commands list", "/ip -> Checks a player's IP address.\n\
-																				/dveh -> Destroys a vehicle\n\
-																				/givegun -> Gives a player a gun\n\
-																				/settime -> Sets a player's time\n\
-																				/setweather -> Sets a player's weather\n\
-																				/makeadmin -> Makes a player admin\n\
-																				/demote -> Demote a player\n\
-																				/playmusic -> Plays a song\n\
-																				/stopmusicforall -> Stops the music for everyone\n\
-																				/restart -> Idk what it does", "Ok", "");
+		new String[1024]; //hasta kick
+		strcat(String, "Use \"@\" for Admin Chat! \n", 1024);
+		strcat(String, "/ip -> Checks a player's IP address.\n", 1024);
+		strcat(String, "/dveh -> Destroys a vehicle\n", 1024);
+		strcat(String, "/settime -> Sets a player's time\n", 1024);
+		strcat(String, "/setweather -> Sets a player's weather\n", 1024);
+		strcat(String, "/makeadmin -> Makes a player admin\n", 1024);
+		strcat(String, "/demote -> Demote a player\n", 1024);
+		strcat(String, "/playmusic -> Plays a song\n", 1024);
+		strcat(String, "/stopmusicforall -> Stops the music for everyone\n", 1024);
+		strcat(String, "/kick -> Kicks a player\n", 1024);
+		strcat(String, "/ban -> Bans a player\n", 1024);
+		strcat(String, "/readpms -> Toggles ON/OFF PM read.\n", 1024);
+		strcat(String, "/restart -> Idk what it does", 1024);
+		Dialog_Show(playerid, acmds_dialog, DIALOG_STYLE_MSGBOX, "Admin Commands list", String, "Ok", "");
+
+																				
 	}
 	return 1;
 }
 
-CMD:restart(playerid, params[])
+CMD:restart(playerid, params[]) // Restarts the server, be careful.
 {	
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
 	{
-	 SendClientMessageToAll(0xFFFFFFFF, "Server is going to be restarted now. Please, rejoin!");
-	 SendRconCommand("gmx");
+		SendClientMessageToAll(0xFFFFFFFF, "Server is going to be restarted now. Please, rejoin!");
+		SendRconCommand("gmx");
 	}
 	return 1;
 }
@@ -595,11 +674,8 @@ CMD:settime(playerid, params[]) // Sets a player time.
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		if(hour > 24) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: Invalid Time.");
 		SetPlayerTime(targetid, hour, 0); //
-		new name[MAX_PLAYER_NAME], aname[MAX_PLAYER_NAME];
-		GetPlayerName(targetid, name, MAX_PLAYER_NAME);
-		GetPlayerName(playerid, aname, MAX_PLAYER_NAME);
-		SendClientMessage(playerid, -1, sprintf("You have set %s (id: %d) time to: %d", name, targetid, hour));
-		SendClientMessage(targetid, -1, sprintf("%s (id: %d) has set your time to: %d", aname, playerid, hour));
+		SendClientMessage(playerid, -1, sprintf("You have set %s (id: %d) time to: %d", PlayerName(targetid), targetid, hour));
+		SendClientMessage(targetid, -1, sprintf("%s (id: %d) has set your time to: %d", PlayerName(playerid), playerid, hour));
 	}
 	return 1;
 }
@@ -612,11 +688,8 @@ CMD:setweather(playerid, params[]) // Sets a player weather
 		if(sscanf(params, "ud", targetid, weather)) return SendClientMessage(playerid,  0x00BFFFFF, "USAGE: {FFFFFF}/setweather <id/playername> <weather>");
 		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
 		SetPlayerWeather(targetid, weather); //
-		new name[MAX_PLAYER_NAME], aname[MAX_PLAYER_NAME];
-		GetPlayerName(targetid, name, MAX_PLAYER_NAME);
-		GetPlayerName(playerid, aname, MAX_PLAYER_NAME);
-		SendClientMessage(playerid, -1, sprintf("You have set %s (id: %d) weather to: %d", name, targetid, weather));
-		SendClientMessage(targetid, -1, sprintf("%s (id: %d) has set your weather to: %d", aname, playerid, weather));
+		SendClientMessage(playerid, -1, sprintf("You have set %s (id: %d) weather to: %d", PlayerName(targetid), targetid, weather));
+		SendClientMessage(targetid, -1, sprintf("%s (id: %d) has set your weather to: %d", PlayerName(playerid), playerid, weather));
 	}
 	return 1;
 }
@@ -631,9 +704,7 @@ CMD:playmusic(playerid, params[]) // Plays music for every online player.
 			if(!IsPlayerNPC(everyone) || IsPlayerConnected(everyone)) {
 				PlayAudioStreamForPlayer(everyone, params); }
 		}
-		new name[MAX_PLAYER_NAME];
-		GetPlayerName(playerid, name, MAX_PLAYER_NAME);
-		SendClientMessageToAll(0x00BFFFFF, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}is now playing a song.", name, playerid));
+		SendClientMessageToAll(0x00BFFFFF, sprintf("Admin {FFFFFF}%s(id:%i) {00BFFF}is now playing a song.", PlayerName(playerid), playerid));
 	}
 	return 1;
 }
@@ -653,6 +724,36 @@ CMD:stopmusicforall(playerid, params[]) // Stops the music for every player.
 	return 1;
 }
 
+CMD:kick(playerid, params[]) // Kick a player
+{
+	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
+	{
+		new targetid, reason[64];
+		if(sscanf(params, "us[64]", targetid, reason)) return SendClientMessage(playerid,  0x00BFFFFF, "USAGE: {FFFFFF}/kick <id/playername> <reason>");
+		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
+		if(targetid == playerid) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You cannot kick yourself.");
+		if(IsPlayerAdmin(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You cannot kick a RCON admin.");
+		SendClientMessageToAll(-1, sprintf("%s (id: %d) {00BFFF}has been kicked from the server. Reason: {FFFFFF}%s", PlayerName(targetid), targetid, reason));
+		Kick(targetid);
+	}
+	return 1;
+}
+
+CMD:ban(playerid, params[]) // Ban a player
+{
+	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
+	{
+		new targetid, reason[64];
+		if(sscanf(params, "us[64]", targetid, reason)) return SendClientMessage(playerid,  0x00BFFFFF, "USAGE: {FFFFFF}/ban <id/playername> <reason>");
+		if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
+		if(targetid == playerid) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You cannot ban yourself.");
+		if(IsPlayerAdmin(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You cannot ban a RCON admin.");
+		SendClientMessageToAll(-1, sprintf("%s (id: %d) {00BFFF}has been banned from the server. Reason: {FFFFFF}%s", PlayerName(targetid), targetid, reason));
+		BanPlayerEx(targetid, reason);
+	}
+	return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SomeSpam(playerid, spam = 10) // The client messages shown when a player connects
@@ -661,18 +762,23 @@ SomeSpam(playerid, spam = 10) // The client messages shown when a player connect
         SendClientMessage(playerid, 0x000000FF, "");
 }  
 
-CarNameTD(playerid)
+CarNameTD(playerid) // The textdraw that displays the car name.
 {
-	//new model = GetVehicleModel(vehicleid);
 	CarName = CreatePlayerTextDraw(playerid, 600.0, 420.0, "ERROR");
 	PlayerTextDrawColor(playerid, CarName, 0x000000FF);
-	//PlayerTextDrawBackgroundColor(playerid, CarName, 0x000000FF);
-	PlayerTextDrawAlignment(playerid, CarName , 2); // Align the textdraw text in the center
+	PlayerTextDrawAlignment(playerid, CarName , 2); 
 	PlayerTextDrawSetShadow(playerid, CarName, 1);
 	PlayerTextDrawLetterSize(playerid, CarName, 0.5, 2.0);
 	PlayerTextDrawFont(playerid, CarName, 3);
 	PlayerTextDrawSetProportional(playerid, CarName, 1);
 	PlayerTextDrawSetOutline(playerid, CarName, 0);
+}
+
+forward BanExPublic(targetid, reason[]);
+ 
+public BanExPublic(targetid, reason[])
+{
+    BanEx(targetid, reason);
 }
 
 stock GetVehicleModelID(vehiclename[]) // From AttDef 2.7 Code. Used on /v.
@@ -683,12 +789,32 @@ stock GetVehicleModelID(vehiclename[]) // From AttDef 2.7 Code. Used on /v.
     } return -1;
 }
 
-/*stock IsNumeric(string[]){ // From AttDef 2.7 Code. Used on /v.
-    for (new i = 0, j = strlen(string); i < j; i++){
-    	if (string[i] > '9' || string[i] < '0') return 0;
+stock BanPlayerEx(targetid, reason[]) // Ban with reason, but with this, banned players can see why they were banned.
+{
+	new banmessage[160];
+	format(banmessage, 160, "{FFFFFF}You have been banned from this server by an admin for: {DC143C}%s{FFFFFF}. \nContact him if you think this is wrong.", reason);
+	Dialog_Show(targetid, BanPlayerEx, DIALOG_STYLE_MSGBOX, "{FFFFFF}Banned!", banmessage, "Ok", "");
+	
+	SetTimerEx("BanExPublic", 300, false, "ds", targetid, reason);
+}
+
+stock PlayerName(playerid)
+{
+	new pName[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, pName, MAX_PLAYER_NAME);
+	return pName;
+}
+
+stock SendMessageToAdmins(text[]) 
+{
+    for(new admins = 0; admins < MAX_PLAYERS; admins++)
+    {
+        if(IsPlayerAdmin(admins) || Player[admins][IsAdmin] == 1) 
+        {
+            SendClientMessage(admins, 0x00BFFFFF, text);
+        } 
     }
-    return 1;
-}*/
+}
 
 IsNumeric(string[])
     return !sscanf(string, "{i}");
