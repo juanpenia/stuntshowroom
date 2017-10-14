@@ -6,6 +6,7 @@
 #include <zcmd>      		// by Zeex ♥
 #include <sscanf2>   		// by Y_Less ♥
 //#include <foreach>
+#include <YSI\y_va>
 #include <easyDialog> 		// by Emmet_ ♥
 //#include <streamer> 		// by Incognito ♥
 #include <strlib> 			// by Slice ♥
@@ -789,11 +790,11 @@ stock GetVehicleModelID(vehiclename[]) // From AttDef 2.7 Code. Used on /v.
     } return -1;
 }
 
-stock BanPlayerEx(targetid, reason[]) // Ban with reason, but with this, banned players can see why they were banned.
+stock BanPlayerEx(targetid, const reason[], va_args<>) // Ban with reason, but with this, banned players can see why they were banned.
 {
-	new banmessage[160];
-	format(banmessage, 160, "{FFFFFF}You have been banned from this server by an admin for: {DC143C}%s{FFFFFF}. \nContact him if you think this is wrong.", reason);
-	Dialog_Show(targetid, BanPlayerEx, DIALOG_STYLE_MSGBOX, "{FFFFFF}Banned!", banmessage, "Ok", "");
+	//new banmessage[160];
+	//format(banmessage, 160, "{FFFFFF}You have been banned from this server by an admin for: {DC143C}%s{FFFFFF}. \nContact him if you think this is wrong.", reason);
+	Dialog_Show(targetid, BanPlayerEx, DIALOG_STYLE_MSGBOX, "{FFFFFF}Banned!", va_return(reason, va_start<2>), "Ok", "");
 	
 	SetTimerEx("BanExPublic", 300, false, "ds", targetid, reason);
 }
@@ -805,13 +806,13 @@ stock PlayerName(playerid)
 	return pName;
 }
 
-stock SendMessageToAdmins(text[]) 
+stock SendMessageToAdmins(const text[], va_args<>) 
 {
     for(new admins = 0; admins < MAX_PLAYERS; admins++)
     {
         if(IsPlayerAdmin(admins) || Player[admins][IsAdmin] == 1) 
         {
-            SendClientMessage(admins, 0x00BFFFFF, text);
+            SendClientMessage(admins, 0x00BFFFFF, va_return(text, va_start<1>));
         } 
     }
 }
