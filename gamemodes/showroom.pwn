@@ -5,7 +5,6 @@
 #include <fixes>			// by SA:MP Community (am i rite?) ♥
 #include <zcmd>      		// by Zeex ♥
 #include <sscanf2>   		// by Y_Less ♥
-//#include <foreach>
 #include <easyDialog> 		// by Emmet_ ♥
 //#include <streamer> 		// by Incognito ♥
 #include <strlib> 			// by Slice ♥
@@ -190,7 +189,7 @@ public OnPlayerCommandPerformed(playerid, cmdtext[], success)
 
 public OnPlayerCommandReceived(playerid,cmdtext[])
 {
-	if(IsSpawned[playerid] == false) // If the player is not spawned, then he can't use commands.
+	if(!IsSpawned[playerid]) // If the player is not spawned, then he can't use commands.
 	{
 		SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must spawn in order to use commands.");
 		return 0;
@@ -263,8 +262,8 @@ CMD:cmds(playerid, params[]) // A list of the commands and what they do.
 
 CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The credits for this CMD goes to them.
 {
-	if(isnull(params)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/v vehicleid");
-	if(IsPlayerInAnyVehicle(playerid) && GetPlayerState(playerid) != PLAYER_STATE_DRIVER) return SendClientMessage(playerid, -1, "Can't spawn a vehicle while you are not the driver.");
+	if(isnull(params)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/v <vehicleid>");
+	if(IsPlayerInAnyVehicle(playerid) && GetPlayerState(playerid) != PLAYER_STATE_DRIVER) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You can't spawn a vehicle while you are a passenger.");
 
 	new veh;
 
@@ -273,7 +272,7 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	else
 		veh = GetVehicleModelID(params);
 
-	if(veh < 400 || veh > 611) return SendClientMessage(playerid, -1, "Invalid Vehicle Name."); //In samp there is no vehile with ID below 400 or above 611
+	if(veh < 400 || veh > 611) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: Invalid vehicle name."); //In samp there is no vehile with ID below 400 or above 611
 
 	new Float:Pos[4];
 	GetPlayerPos(playerid, Pos[0], Pos[1], Pos[2]);
@@ -508,6 +507,7 @@ CMD:pm(playerid, params[]) // Personal message, PM read needs more testing.
 	new targetid, msg[128];
 	if(sscanf(params, "us[128]", targetid, msg)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/pm <id/playername> <message>");
 	if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
+	if(targetid == playerid) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You can't PM yourself.");
 	SendClientMessage(playerid, 0x00BFFFFF, sprintf("PM sent to {FFFFFF}%s (id: %d){00BFFF}.", PlayerName(targetid), targetid));
 	SendClientMessage(targetid, 0x00BFFFFF, sprintf("PM from {FFFFFF}%s (id: %d): %s", PlayerName(playerid), playerid, msg));
 	PlayerPlaySound(targetid, 1038, 0, 0 ,0);
