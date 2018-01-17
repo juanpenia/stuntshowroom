@@ -1,16 +1,19 @@
 // Scripted by poxer, with love :-*
 
-
 #include <a_samp> 			// by SA:MP Dev Team ♥
 #include <fixes>			// by SA:MP Community (am i rite?) ♥
 #include <zcmd>      		// by Zeex ♥
-#include <sscanf2>   		// by Y_Less ♥
+
+//#include <sscanf2>   		// by Y_Less ♥ 
+// sscanf is now built-in into the code, but it needs foreach.
+#include <foreach>
+
 #include <easyDialog> 		// by Emmet_ ♥
 //#include <streamer> 		// by Incognito ♥
 #include <strlib> 			// by Slice ♥
 #include <crashdetect> 		// by 0x5A656578 ♥
 
-new aPWD[]="1234"; // The admin password. It's highly recommended to change this. Try using 10 characters as maximum.
+new aPWD[]="123456"; // The admin password. It's highly recommended to change this. Try using 10 characters as maximum.
 
 AntiDeAMX()
 {
@@ -32,6 +35,8 @@ enum
 
 new Player[MAX_PLAYERS][e_Player];
 new bool:IsSpawned[MAX_PLAYERS];
+new bool:GodCar[MAX_PLAYERS];
+new bool:gcNote[MAX_PLAYERS];
 new PlayerText: CarName;
 
 new aVehicleNames[][] =
@@ -70,82 +75,37 @@ new aVehicleNames[][] =
 main()
 {
 	print("-------------------------------");
-	print(" Showroom v1.1 Loaded :) ");
+	print(" Showroom v1.2 Loaded :) ");
 	print("-------------------------------");
 }
 
+////////////////////////////////////////// Public Funcions //////////////////////////////////////////
 
 public OnGameModeInit()
 {
-	AntiDeAMX();
-	SetGameModeText("Showroom v1.1");
+	AntiDeAMX(); // In case you modify this gamemode and add more stuff, this will help it not to get decompiled.
+	SetGameModeText("Showroom v1.2");
 	UsePlayerPedAnims();
 	DisableInteriorEnterExits();
 	
-	// Classes
-	AddPlayerClass(3, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(4, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(5, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(18, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(26, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(49, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(51, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(53, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(80, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(155, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	AddPlayerClass(230, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
-	
-	// Cars
-	AddStaticVehicleEx(411,1947.1027,-2110.8489,13.2741,269.6516,64,1, 180); // 
-	AddStaticVehicleEx(415,1947.0807,-2117.3584,13.3187,270.6575,25,1, 180); // 
-	AddStaticVehicleEx(429,1947.2411,-2123.6582,13.2265,269.7552,13,13, 180); // 
-	AddStaticVehicleEx(434,1947.3462,-2130.1499,13.5134,270.5853,12,12, 180); // 
-	AddStaticVehicleEx(451,1947.7021,-2136.5476,13.2531,270.8062,125,125, 180); // 
-	AddStaticVehicleEx(522,1968.5656,-2123.4812,13.1203,113.7795,3,8, 180); // 
-	AddStaticVehicleEx(521,1968.6559,-2125.6023,13.1176,114.4376,75,13, 180); // 
-	AddStaticVehicleEx(522,1968.7225,-2127.7478,13.1183,118.3975,6,25, 180); // 
-	AddStaticVehicleEx(521,1968.8687,-2129.8645,13.1179,116.2982,87,118, 180); // 
-	AddStaticVehicleEx(522,1968.9025,-2131.7871,13.1174,113.2075,7,79, 180); // 
-	AddStaticVehicleEx(521,1968.9799,-2133.7654,13.1157,112.0292,92,3, 180); // 
-	AddStaticVehicleEx(522,1968.9727,-2135.7576,13.1174,113.0199,8,82, 180); // 
-	AddStaticVehicleEx(521,1969.1440,-2137.8059,13.1162,112.0444,115,118, 180); // 
-	AddStaticVehicleEx(522,1969.2780,-2139.5725,13.1171,111.0512,36,105, 180); // 
-	AddStaticVehicleEx(521,1969.3142,-2141.1599,13.1150,115.1064,25,118, 180); // 
-	AddStaticVehicleEx(477,1947.0459,-2114.1316,13.3006,270.4208,94,1, 180); // 
-	AddStaticVehicleEx(480,1947.2621,-2120.5645,13.3200,270.7855,12,12, 180); // 
-	AddStaticVehicleEx(496,1947.3982,-2126.9395,13.2629,270.0524,66,72, 180); // 
-	AddStaticVehicleEx(506,1947.6582,-2133.3162,13.2504,270.0591,6,6, 180); // 
-	AddStaticVehicleEx(494,1941.4596,-2141.7681,13.4523,180.2881,36,13, 180); // 
-	AddStaticVehicleEx(502,1937.5325,-2141.3684,13.4543,181.2041,36,88, 180); // 
-	AddStaticVehicleEx(503,1931.9705,-2141.0706,13.4574,179.2300,87,74, 180); // 
-	AddStaticVehicleEx(556,1946.9948,-2142.4072,13.9225,220.8184,1,1, 180); // 
-	AddStaticVehicleEx(568,1928.3525,-2140.2769,13.4294,180.2291,9,39, 180); // 
-	AddStaticVehicleEx(522,1969.4821,-2142.6897,13.1173,114.8150,226,233, 180); // 
+	Classes(); // Skins
+	Vehicles(); // Vehicles. Thanks captain obvious!
+
 	return 1;
 }
 
 public OnGameModeExit()
 {
-	print("-------------------------------");
-	print("Stunt Showroom v1.1 Unloaded :(");
-	print("-------------------------------");
+	print("---------------------------------");
+	print(" Showroom v1.2 Unloaded :( ");
+	print("---------------------------------");
 	return 1;
-}
-
-PoxerSuperClassSelection(playerid)
-{
- 	SetPlayerInterior(playerid, 7);
-	SetPlayerPos(playerid, -1395.8593,-204.5580,1051.3346);
-	SetPlayerFacingAngle(playerid, 90.0000);
-	SetPlayerCameraPos(playerid, -1403.0548,-204.5701,1051.3326);
-	SetPlayerCameraLookAt(playerid, -1392.0723,-204.6087,1051.3387);
-	SetPlayerTime(playerid, 00, 01);
 }
 
 
 public OnPlayerRequestClass(playerid, classid)
 {
-	PoxerSuperClassSelection(playerid);
+	ClassSelectionScreen(playerid);
 	IsSpawned[playerid] = false;
 	return 1;
 }
@@ -153,7 +113,7 @@ public OnPlayerRequestClass(playerid, classid)
 
 public OnPlayerConnect(playerid)
 {
-	RemoveBuildingForPlayer(playerid, 1226, 1965.9219, -2134.5859, 16.3828, 0.25); // A lamp that interrups with the bikes.
+	RemoveBuildingForPlayer(playerid, 1226, 1965.9219, -2134.5859, 16.3828, 0.25); // A lamp that interrupts with the bikes.
 	PlayAudioStreamForPlayer(playerid, "http://vps433560.ovh.net/123/intro.mp3");
 	SomeSpam(playerid);
 	CarNameTD(playerid);
@@ -163,12 +123,18 @@ public OnPlayerConnect(playerid)
 	SendDeathMessage(INVALID_PLAYER_ID, playerid, 200);
 	Player[playerid][PMread] = 1;
 	IsSpawned[playerid] = false;
+	GodCar[playerid] = false;
+	gcNote[playerid] = false;
 	return 1;
 }
 
 public OnPlayerDisconnect(playerid, reason)
 {
     SendDeathMessage(INVALID_PLAYER_ID, playerid, 201);
+	IsSpawned[playerid] = false;
+	GodCar[playerid] = false;
+	gcNote[playerid] = false;
+	Player[playerid][PMread] = 0;
 	return 1;
 }
 
@@ -187,7 +153,7 @@ public OnPlayerCommandPerformed(playerid, cmdtext[], success)
 	return 1;
 }
 
-public OnPlayerCommandReceived(playerid,cmdtext[])
+public OnPlayerCommandReceived(playerid, cmdtext[])
 {
 	if(!IsSpawned[playerid]) // If the player is not spawned, then he can't use commands.
 	{
@@ -197,9 +163,8 @@ public OnPlayerCommandReceived(playerid,cmdtext[])
 	return 1;
 }
 
-forward CarTD(playerid);
-
-public CarTD(playerid)
+forward CarTD(playerid); // The textdraw which will display the vehicle name.
+public CarTD(playerid) 
 {
 	PlayerTextDrawHide(playerid, CarName);
 }
@@ -209,8 +174,7 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 	if(newstate ==  PLAYER_STATE_DRIVER || newstate == PLAYER_STATE_PASSENGER)
 	{
 		new str[60];
-		new vehicleid = GetPlayerVehicleID(playerid);
-		new model = GetVehicleModel(vehicleid); //get the vehicle model of the player's vehicle
+		new model = GetVehicleModel(PlayerVeh(playerid)); // get the vehicle model of the player's vehicle
 		
 		format(str, sizeof(str), "~h~~r~%s", aVehicleNames[model - 400]); //store the vehicle's name
 		{
@@ -218,6 +182,26 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 			PlayerTextDrawShow(playerid, CarName);
 			SetTimer("CarTD", 3000, false);
 		}
+	}
+	return 1;
+}
+
+public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
+{
+
+	if(newkeys & KEY_FIRE && PlayerVeh(playerid)) // Add nitro.
+	{
+		AddVehicleComponent(PlayerVeh(playerid), 1010); // Nitro
+	}
+	
+	if(newkeys & KEY_CROUCH && PlayerVeh(playerid)) // Repair vehicle.
+	{
+		RepairVehicle(PlayerVeh(playerid));
+	}
+	
+	if(newkeys & KEY_ACTION && PlayerVeh(playerid))
+	{
+		cmd_flip(playerid, ""); // Flip vehicle.
 	}
 	return 1;
 }
@@ -234,9 +218,20 @@ public OnPlayerText(playerid, text[])
 	return 1;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////// CMDS HERE ////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public OnPlayerUpdate(playerid)
+{
+	// God car.
+	if(GodCar[playerid] && IsPlayerInAnyVehicle(playerid))
+	{
+		new Float:vehHp;
+		GetVehicleHealth(PlayerVeh(playerid), vehHp);
+		if(vehHp < 999) RepairVehicle(PlayerVeh(playerid));
+	}
+
+	return 1;
+}
+
+////////////////////////////////////////// Public Commands //////////////////////////////////////////
 
 CMD:cmds(playerid, params[]) // A list of the commands and what they do.
 {
@@ -272,7 +267,7 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	else
 		veh = GetVehicleModelID(params);
 
-	if(veh < 400 || veh > 611) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: Invalid vehicle name."); //In samp there is no vehile with ID below 400 or above 611
+	if(veh < 400 || veh > 611) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: Invalid vehicle name."); //In samp there is no vehicle with ID below 400 or above 611
 
 	new Float:Pos[4];
 	GetPlayerPos(playerid, Pos[0], Pos[1], Pos[2]);
@@ -280,7 +275,7 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	
 	if(IsPlayerInAnyVehicle(playerid)) {
 	Player[playerid][LastVehicle] = -1;
-	DestroyVehicle(GetPlayerVehicleID(playerid)); //If you are already in a vehicle and use /car, it will destroy that vehicle first and spawn the new one.
+	DestroyVehicle(PlayerVeh(playerid)); //If you are already in a vehicle and use /car, it will destroy that vehicle first and spawn the new one.
 	}
 	
 	new MyVehicle = CreateVehicle(veh, Pos[0], Pos[1], Pos[2], Pos[3], -1, -1, -1); //Creates the specific vehicle u were looking for (veh).
@@ -294,7 +289,7 @@ CMD:v(playerid, params[]) // Spawns a car. Taken from AttDef 2.7 sourcecode. The
 	SetVehicleVirtualWorld(MyVehicle, GetPlayerVirtualWorld(playerid)); //Sets vehicle virtual world the the current virtual world of the player.
 	PutPlayerInVehicle(playerid, MyVehicle, 0); //Puts player in the driver seat.
 
-	Player[playerid][LastVehicle] = GetPlayerVehicleID(playerid);
+	Player[playerid][LastVehicle] = PlayerVeh(playerid);
 	return 1;
 }
 
@@ -306,11 +301,12 @@ CMD:car(playerid, params[])
 CMD:nitro(playerid, params[]) // Adds nitro to a vehicle.
 {
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be inside a vehicle in order to add Nitro.");
-	new carro = GetPlayerVehicleID(playerid); // carro = a slang for car in spanish.
-	AddVehicleComponent(carro, 1010); // Nitro
+	AddVehicleComponent(PlayerVeh(playerid), 1010); // Nitro
+	PlayerPlaySound(playerid, 1133, 0, 0 ,0);
 	SendClientMessage(playerid, 0x00BFFFFF, "Nitro added.");
 	return 1;
 }
+
 
 CMD:nos(playerid, params[]) // Does the same than /nitro
 {
@@ -320,13 +316,13 @@ CMD:nos(playerid, params[]) // Does the same than /nitro
 CMD:hydraulics(playerid, params[]) // Adds hydraulics to a vehicle.
 {
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be inside a vehicle in order to add Hydraulics.");
-	new carro = GetPlayerVehicleID(playerid);
-	AddVehicleComponent(carro, 1087); // hydraulics
+	AddVehicleComponent(PlayerVeh(playerid), 1087); // hydraulics
+	PlayerPlaySound(playerid, 1133, 0, 0, 0);
 	SendClientMessage(playerid, 0x00BFFFFF, "Hydraulics added.");
 	return 1;
 }
 
-CMD:hs(playerid, params[]) // Does the same than /nitro
+CMD:hs(playerid, params[]) // Does the same than /hydraulics
 {
 	return cmd_hydraulics(playerid, params);
 }
@@ -334,8 +330,8 @@ CMD:hs(playerid, params[]) // Does the same than /nitro
 CMD:repair(playerid, params[]) // Repairs the player's vehicle.
 {
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You are not in a vehicle!");
-	RepairVehicle(GetPlayerVehicleID(playerid));
-	SetVehicleHealth(GetPlayerVehicleID(playerid), 10000);
+	RepairVehicle(PlayerVeh(playerid));
+	PlayerPlaySound(playerid, 1133, 0, 0, 0);
 	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle has been repaired!");
 	return 1;
 }
@@ -344,16 +340,16 @@ CMD:respawn(playerid, params[]) // Takes the player back to spawn and refills th
 {
 	if(IsPlayerInAnyVehicle(playerid))
 	{
-		new playerveh = GetPlayerVehicleID(playerid);
-		SetVehiclePos(playerveh, 1961.6196,-2106.9402,13.3828);
-		SetVehicleZAngle(playerveh,180.0000);
+		SetVehiclePos(PlayerVeh(playerid), 1961.6196,-2106.9402,13.3828);
+		SetVehicleZAngle(PlayerVeh(playerid),180.0000);
 		SetPlayerHealth(playerid, 100);
-		RepairVehicle(playerveh);
-		SetVehicleHealth(GetPlayerVehicleID(playerid), 10000);
+		RepairVehicle(PlayerVeh(playerid));
+		SetCameraBehindPlayer(playerid);
 	}
 	else
 	{
 		SpawnPlayer(playerid);
+		SetCameraBehindPlayer(playerid);
 	}
 	return 1;
 }
@@ -397,14 +393,12 @@ CMD:hp(playerid, params[]) // Does the same than /heal
 
 CMD:changelog(playerid, params[]) // Shows a log with the changes done in the gamemode
 {
-	Dialog_Show(playerid, changelog_dialog, DIALOG_STYLE_MSGBOX, "Changelog", "{00BFFF}Showroom {FFFFFF}1.1:\n- Added personal messages (/pm) \n\
-																				- Colors were fixed in some client messages \n\
-																				- Improved admin checks on some commands \n\
-																				- Admins now have admin chat \n\
-																				- Added more admin cmds (kick, ban, etc) \n\
-																				- Players now aren't able to use commands if they aren't spawned \n\
-																				- Fixed some commands syntax \n\
-																				- More code improvement and optimization", "Close", "");
+	Dialog_Show(playerid, changelog_dialog, DIALOG_STYLE_MSGBOX, "Changelog", "{00BFFF}Showroom {FFFFFF}1.2:\n- Players now can repair, flip and add nitro to their vehicles using keys. \n\
+																				- Added more skins. \n\
+																				- Fixed sound alert on PM. \n\
+																				- /godcar has been totally re-done. \n\
+																				- Code optimization and improvements. \n\
+																				- Hopefully a bit more of documentation in the code.", "Close", "");
 	return 1; 
 }
 
@@ -426,34 +420,54 @@ CMD:flip(playerid, params[])
 {
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be in a vehicle in order to flip it.");
 	
-	new vehid = GetPlayerVehicleID(playerid);
 	new Float:Ang;
 	
-	GetVehicleZAngle(vehid, Ang);
-	SetVehicleZAngle(vehid, Ang);
-	RepairVehicle(vehid);
-	SetVehicleHealth(vehid, 10000);
+	GetVehicleZAngle(PlayerVeh(playerid), Ang);
+	SetVehicleZAngle(PlayerVeh(playerid), Ang);
+	RepairVehicle(PlayerVeh(playerid));
 	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle has been flipped.");
 	return 1;
 }
 
-CMD:color(playerid, params[])
+CMD:color(playerid, params[]) // Change the vehicle colors
 {
 	new c1, c2;
-	new vehicleid = GetPlayerVehicleID(playerid);
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be in a vehicle in order to change its colors.");
 	if(sscanf(params, "dd", c1, c2)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/color <color1> <color2>");
-	ChangeVehicleColor(vehicleid, c1, c2);
+	ChangeVehicleColor(PlayerVeh(playerid), c1, c2);
+	PlayerPlaySound(playerid, 1134, 0, 0, 0);
 	SendClientMessage(playerid, 0x00BFFFFF, "You have changed your vehicle color(s).");
 	return 1;
 }
 
-CMD:godcar(playerid, params[])
+/*
+CMD:godcar(playerid, params[]) // Old god car
 {
 	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be in a vehicle in order to use this command.");
-	new vehid = GetPlayerVehicleID(playerid);
-	SetVehicleHealth(vehid, 54321);
+	SetVehicleHealth(PlayerVeh(playerid), 54321);
 	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle is now as strong as Thor's hammer.");
+	return 1;
+}
+*/
+
+CMD:godcar(playerid, params[]) // New god car, check OnPlayerUpdate
+{
+	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You must be in a vehicle in order to use this command.");
+	if(!GodCar[playerid])
+	{
+	GodCar[playerid] = true;
+	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle is now as strong as Thor's hammer.");
+	if(!gcNote[playerid])
+	{
+	SendClientMessage(playerid, 0x00BFFFFF, "Little note: {FFFFFF}every vehicle that you get in will be automatically repaired. Type /godcar again to cancel this.");
+	gcNote[playerid] = true;
+	}
+	}
+	else
+	{
+	GodCar[playerid] = false;
+	SendClientMessage(playerid, 0x00BFFFFF, "Your vehicle is trash once again."); //jkjkjjkjkjkjkjk
+	}
 	return 1;
 }
 
@@ -507,10 +521,10 @@ CMD:pm(playerid, params[]) // Personal message, PM read needs more testing.
 	new targetid, msg[128];
 	if(sscanf(params, "us[128]", targetid, msg)) return SendClientMessage(playerid, 0x00BFFFFF, "USAGE: {FFFFFF}/pm <id/playername> <message>");
 	if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: The target player is not connected.");
-	if(targetid == playerid) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You can't PM yourself.");
+	//if(targetid == playerid) return SendClientMessage(playerid, 0xFF0000FF, "ERROR: You can't PM yourself.");
 	SendClientMessage(playerid, 0x00BFFFFF, sprintf("PM sent to {FFFFFF}%s (id: %d){00BFFF}.", PlayerName(targetid), targetid));
 	SendClientMessage(targetid, 0x00BFFFFF, sprintf("PM from {FFFFFF}%s (id: %d): %s", PlayerName(playerid), playerid, msg));
-	PlayerPlaySound(targetid, 1038, 0, 0 ,0);
+	PlayerPlaySound(targetid, 1138, 0, 0 ,0);
 
 	for(new admins = 0; admins < MAX_PLAYERS; admins++)
 	{
@@ -525,8 +539,33 @@ CMD:pm(playerid, params[]) // Personal message, PM read needs more testing.
 	}
 	return 1;
 }
-///////////////////////// ADMIN CMDS ////////////////////////
 
+////////////////////////////////////////// Admin Commands //////////////////////////////////////////
+
+CMD:acmds(playerid, params[]) //a list of the admin cmds 
+{
+	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) // only admins, duh.
+	{	
+		new String[1024];
+		strcat(String, "Use \"@\" for Admin Chat! \n", sizeof(String));
+		strcat(String, "/ip -> Checks a player's IP address.\n", sizeof(String));
+		strcat(String, "/dveh -> Destroys a vehicle\n", sizeof(String));
+		strcat(String, "/settime -> Sets a player's time\n", sizeof(String));
+		strcat(String, "/setweather -> Sets a player's weather\n", sizeof(String));
+		strcat(String, "/makeadmin -> Makes a player admin\n", sizeof(String));
+		strcat(String, "/demote -> Demote a player\n", sizeof(String));
+		strcat(String, "/playmusic -> Plays a song\n", sizeof(String));
+		strcat(String, "/stopmusicforall -> Stops the music for everyone\n", sizeof(String));
+		strcat(String, "/kick -> Kicks a player\n", sizeof(String));
+		strcat(String, "/ban -> Bans a player\n", sizeof(String));
+		strcat(String, "/readpms -> Toggles ON/OFF PM read.\n", sizeof(String));
+		strcat(String, "/restart -> Idk what it does", sizeof(String));
+		Dialog_Show(playerid, acmds_dialog, DIALOG_STYLE_MSGBOX, "Admin Commands list", String, "Ok", "");
+
+																				
+	}
+	return 1;
+}
 
 CMD:makeadmin(playerid, params[])
 {
@@ -616,31 +655,6 @@ CMD:ip(playerid, params[]) // Check a player's IP address
 }
 
 
-CMD:acmds(playerid, params[]) //a list of the admin cmds 
-{
-	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1) // only admins, duh.
-	{	
-		new String[1024]; //hasta kick
-		strcat(String, "Use \"@\" for Admin Chat! \n", 1024);
-		strcat(String, "/ip -> Checks a player's IP address.\n", 1024);
-		strcat(String, "/dveh -> Destroys a vehicle\n", 1024);
-		strcat(String, "/settime -> Sets a player's time\n", 1024);
-		strcat(String, "/setweather -> Sets a player's weather\n", 1024);
-		strcat(String, "/makeadmin -> Makes a player admin\n", 1024);
-		strcat(String, "/demote -> Demote a player\n", 1024);
-		strcat(String, "/playmusic -> Plays a song\n", 1024);
-		strcat(String, "/stopmusicforall -> Stops the music for everyone\n", 1024);
-		strcat(String, "/kick -> Kicks a player\n", 1024);
-		strcat(String, "/ban -> Bans a player\n", 1024);
-		strcat(String, "/readpms -> Toggles ON/OFF PM read.\n", 1024);
-		strcat(String, "/restart -> Idk what it does", 1024);
-		Dialog_Show(playerid, acmds_dialog, DIALOG_STYLE_MSGBOX, "Admin Commands list", String, "Ok", "");
-
-																				
-	}
-	return 1;
-}
-
 CMD:restart(playerid, params[]) // Restarts the server, be careful.
 {	
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
@@ -651,7 +665,7 @@ CMD:restart(playerid, params[]) // Restarts the server, be careful.
 	return 1;
 }
 
-CMD:givegun(playerid, params[])
+CMD:givegun(playerid, params[]) // Give a player a gun.
 {
 	if(IsPlayerAdmin(playerid) || Player[playerid][IsAdmin] == 1)
 	{
@@ -754,32 +768,13 @@ CMD:ban(playerid, params[]) // Ban a player
 	return 1;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-SomeSpam(playerid, spam = 10) // The client messages shown when a player connects
-{
-    for(new i; i != spam; i++)
-        SendClientMessage(playerid, 0x000000FF, "");
-}  
-
-CarNameTD(playerid) // The textdraw that displays the car name.
-{
-	CarName = CreatePlayerTextDraw(playerid, 600.0, 420.0, "ERROR");
-	PlayerTextDrawColor(playerid, CarName, 0x000000FF);
-	PlayerTextDrawAlignment(playerid, CarName , 2); 
-	PlayerTextDrawSetShadow(playerid, CarName, 1);
-	PlayerTextDrawLetterSize(playerid, CarName, 0.5, 2.0);
-	PlayerTextDrawFont(playerid, CarName, 3);
-	PlayerTextDrawSetProportional(playerid, CarName, 1);
-	PlayerTextDrawSetOutline(playerid, CarName, 0);
-}
-
-forward BanExPublic(targetid, reason[]);
- 
+forward BanExPublic(targetid, reason[]); // Delayed timer so banned players can see why they were banned.
 public BanExPublic(targetid, reason[])
 {
     BanEx(targetid, reason);
 }
+
+////////////////////////////////////////// Stock Funcions //////////////////////////////////////////
 
 stock GetVehicleModelID(vehiclename[]) // From AttDef 2.7 Code. Used on /v.
 {
@@ -805,6 +800,13 @@ stock PlayerName(playerid)
 	return pName;
 }
 
+stock PlayerVeh(playerid)
+{
+	new pVehicle = GetPlayerVehicleID(playerid);
+	return pVehicle;
+}
+
+
 stock SendMessageToAdmins(text[]) 
 {
     for(new admins = 0; admins < MAX_PLAYERS; admins++)
@@ -816,5 +818,338 @@ stock SendMessageToAdmins(text[])
     }
 }
 
+////////////////////////////////////////// Others //////////////////////////////////////////
+
 IsNumeric(string[])
     return !sscanf(string, "{i}");
+	
+ClassSelectionScreen(playerid)
+{
+ 	SetPlayerInterior(playerid, 7);
+	SetPlayerPos(playerid, -1395.8593,-204.5580,1051.3346);
+	SetPlayerFacingAngle(playerid, 90.0000);
+	SetPlayerCameraPos(playerid, -1403.0548,-204.5701,1051.3326);
+	SetPlayerCameraLookAt(playerid, -1392.0723,-204.6087,1051.3387);
+	SetPlayerTime(playerid, 00, 01);
+}
+
+SomeSpam(playerid, spam = 10) // The client messages shown when a player connects
+{
+    for(new i; i != spam; i++)
+        SendClientMessage(playerid, 0x000000FF, "");
+}  
+
+CarNameTD(playerid) // The textdraw that displays the car name.
+{
+	CarName = CreatePlayerTextDraw(playerid, 600.0, 420.0, "ERROR");
+	PlayerTextDrawColor(playerid, CarName, 0x000000FF);
+	PlayerTextDrawAlignment(playerid, CarName , 2); 
+	PlayerTextDrawSetShadow(playerid, CarName, 1);
+	PlayerTextDrawLetterSize(playerid, CarName, 0.5, 2.0);
+	PlayerTextDrawFont(playerid, CarName, 3);
+	PlayerTextDrawSetProportional(playerid, CarName, 1);
+	PlayerTextDrawSetOutline(playerid, CarName, 0);
+}
+
+	
+Classes()
+{
+	AddPlayerClass(3, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(4, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(5, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(18, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(26, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(49, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(51, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(53, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(80, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(123, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(155, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(176, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); //
+	AddPlayerClass(199, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); //
+	AddPlayerClass(224, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); //
+	AddPlayerClass(230, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+	AddPlayerClass(305, 1940.7081,-2116.0146,13.6953,270.0000,0,0,0,0,0,0); // 
+}
+	
+Vehicles()
+{
+	AddStaticVehicleEx(411,1947.1027,-2110.8489,13.2741,269.6516,64,1, 180); // 
+	AddStaticVehicleEx(415,1947.0807,-2117.3584,13.3187,270.6575,25,1, 180); // 
+	AddStaticVehicleEx(429,1947.2411,-2123.6582,13.2265,269.7552,13,13, 180); // 
+	AddStaticVehicleEx(434,1947.3462,-2130.1499,13.5134,270.5853,12,12, 180); // 
+	AddStaticVehicleEx(451,1947.7021,-2136.5476,13.2531,270.8062,125,125, 180); // 
+	AddStaticVehicleEx(522,1968.5656,-2123.4812,13.1203,113.7795,3,8, 180); // 
+	AddStaticVehicleEx(521,1968.6559,-2125.6023,13.1176,114.4376,75,13, 180); // 
+	AddStaticVehicleEx(522,1968.7225,-2127.7478,13.1183,118.3975,6,25, 180); // 
+	AddStaticVehicleEx(521,1968.8687,-2129.8645,13.1179,116.2982,87,118, 180); // 
+	AddStaticVehicleEx(522,1968.9025,-2131.7871,13.1174,113.2075,7,79, 180); // 
+	AddStaticVehicleEx(521,1968.9799,-2133.7654,13.1157,112.0292,92,3, 180); // 
+	AddStaticVehicleEx(522,1968.9727,-2135.7576,13.1174,113.0199,8,82, 180); // 
+	AddStaticVehicleEx(521,1969.1440,-2137.8059,13.1162,112.0444,115,118, 180); // 
+	AddStaticVehicleEx(522,1969.2780,-2139.5725,13.1171,111.0512,36,105, 180); // 
+	AddStaticVehicleEx(521,1969.3142,-2141.1599,13.1150,115.1064,25,118, 180); // 
+	AddStaticVehicleEx(477,1947.0459,-2114.1316,13.3006,270.4208,94,1, 180); // 
+	AddStaticVehicleEx(480,1947.2621,-2120.5645,13.3200,270.7855,12,12, 180); // 
+	AddStaticVehicleEx(496,1947.3982,-2126.9395,13.2629,270.0524,66,72, 180); // 
+	AddStaticVehicleEx(506,1947.6582,-2133.3162,13.2504,270.0591,6,6, 180); // 
+	AddStaticVehicleEx(494,1941.4596,-2141.7681,13.4523,180.2881,36,13, 180); // 
+	AddStaticVehicleEx(502,1937.5325,-2141.3684,13.4543,181.2041,36,88, 180); // 
+	AddStaticVehicleEx(503,1931.9705,-2141.0706,13.4574,179.2300,87,74, 180); // 
+	AddStaticVehicleEx(556,1946.9948,-2142.4072,13.9225,220.8184,1,1, 180); // 
+	AddStaticVehicleEx(568,1928.3525,-2140.2769,13.4294,180.2291,9,39, 180); // 
+	AddStaticVehicleEx(522,1969.4821,-2142.6897,13.1173,114.8150,226,233, 180); //
+}	
+
+////////////////////////////////////////// sscanf //////////////////////////////////////////
+
+stock sscanf(string[], format[], {Float,_}:...)
+{
+	#if defined isnull
+		if (isnull(string))
+	#else
+		if (string[0] == 0 || (string[0] == 1 && string[1] == 0))
+	#endif
+		{
+			return format[0];
+		}
+	#pragma tabsize 4
+	new
+		formatPos = 0,
+		stringPos = 0,
+		paramPos = 2,
+		paramCount = numargs(),
+		delim = ' ';
+	while (string[stringPos] && string[stringPos] <= ' ')
+	{
+		stringPos++;
+	}
+	while (paramPos < paramCount && string[stringPos])
+	{
+		switch (format[formatPos++])
+		{
+			case '\0':
+			{
+				return 0;
+			}
+			case 'i', 'd':
+			{
+				new
+					neg = 1,
+					num = 0,
+					ch = string[stringPos];
+				if (ch == '-')
+				{
+					neg = -1;
+					ch = string[++stringPos];
+				}
+				do
+				{
+					stringPos++;
+					if ('0' <= ch <= '9')
+					{
+						num = (num * 10) + (ch - '0');
+					}
+					else
+					{
+						return -1;
+					}
+				}
+				while ((ch = string[stringPos]) > ' ' && ch != delim);
+				setarg(paramPos, 0, num * neg);
+			}
+			case 'h', 'x':
+			{
+				new
+					num = 0,
+					ch = string[stringPos];
+				do
+				{
+					stringPos++;
+					switch (ch)
+					{
+						case 'x', 'X':
+						{
+							num = 0;
+							continue;
+						}
+						case '0' .. '9':
+						{
+							num = (num << 4) | (ch - '0');
+						}
+						case 'a' .. 'f':
+						{
+							num = (num << 4) | (ch - ('a' - 10));
+						}
+						case 'A' .. 'F':
+						{
+							num = (num << 4) | (ch - ('A' - 10));
+						}
+						default:
+						{
+							return -1;
+						}
+					}
+				}
+				while ((ch = string[stringPos]) > ' ' && ch != delim);
+				setarg(paramPos, 0, num);
+			}
+			case 'c':
+			{
+				setarg(paramPos, 0, string[stringPos++]);
+			}
+			case 'f':
+			{
+
+				new changestr[256], changepos = 0, strpos = stringPos;
+				while(changepos < 16 && string[strpos] && string[strpos] != delim)
+				{
+					changestr[changepos++] = string[strpos++];
+    				}
+				changestr[changepos] = '\0';
+				setarg(paramPos,0,_:floatstr(changestr));
+			}
+			case 'p':
+			{
+				delim = format[formatPos++];
+				continue;
+			}
+			case '\'':
+			{
+				new
+					end = formatPos - 1,
+					ch;
+				while ((ch = format[++end]) && ch != '\'') {}
+				if (!ch)
+				{
+					return -1;
+				}
+				format[end] = '\0';
+				if ((ch = strfind(string, format[formatPos], false, stringPos)) == -1)
+				{
+					if (format[end + 1])
+					{
+						return -1;
+					}
+					return 0;
+				}
+				format[end] = '\'';
+				stringPos = ch + (end - formatPos);
+				formatPos = end + 1;
+			}
+			case 'u':
+			{
+				new
+					end = stringPos - 1,
+					id = 0,
+					bool:num = true,
+					ch;
+				while ((ch = string[++end]) && ch != delim)
+				{
+					if (num)
+					{
+						if ('0' <= ch <= '9')
+						{
+							id = (id * 10) + (ch - '0');
+						}
+						else
+						{
+							num = false;
+						}
+					}
+				}
+				if (num && IsPlayerConnected(id))
+				{
+					setarg(paramPos, 0, id);
+				}
+				else
+				{
+					#if !defined foreach
+						#define foreach(%1,%2) for (new %2 = 0; %2 < MAX_PLAYERS; %2++) if (IsPlayerConnected(%2))
+						#define __SSCANF_FOREACH__
+					#endif
+					string[end] = '\0';
+					num = false;
+					new
+						name[MAX_PLAYER_NAME];
+					id = end - stringPos;
+					foreach (new i: Player)
+					{
+						GetPlayerName(i, name, sizeof (name));
+						if (!strcmp(name, string[stringPos], true, id))
+						{
+							setarg(paramPos, 0, i);
+							num = true;
+							break;
+						}
+					}
+					if (!num)
+					{
+						setarg(paramPos, 0, INVALID_PLAYER_ID);
+					}
+					string[end] = ch;
+					#if defined __SSCANF_FOREACH__
+						#undef foreach
+						#undef __SSCANF_FOREACH__
+					#endif
+				}
+				stringPos = end;
+			}
+			case 's', 'z':
+			{
+				new
+					i = 0,
+					ch;
+				if (format[formatPos])
+				{
+					while ((ch = string[stringPos++]) && ch != delim)
+					{
+						setarg(paramPos, i++, ch);
+					}
+					if (!i)
+					{
+						return -1;
+					}
+				}
+				else
+				{
+					while ((ch = string[stringPos++]))
+					{
+						setarg(paramPos, i++, ch);
+					}
+				}
+				stringPos--;
+				setarg(paramPos, i, '\0');
+			}
+			default:
+			{
+				continue;
+			}
+		}
+		while (string[stringPos] && string[stringPos] != delim && string[stringPos] > ' ')
+		{
+			stringPos++;
+		}
+		while (string[stringPos] && (string[stringPos] == delim || string[stringPos] <= ' '))
+		{
+			stringPos++;
+		}
+		paramPos++;
+	}
+	do
+	{
+		if ((delim = format[formatPos++]) > ' ')
+		{
+			if (delim == '\'')
+			{
+				while ((delim = format[formatPos++]) && delim != '\'') {}
+			}
+			else if (delim != 'z')
+			{
+				return delim;
+			}
+		}
+	}
+	while (delim > ' ');
+	return 0;
+}
