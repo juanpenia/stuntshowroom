@@ -1,13 +1,12 @@
 // Scripted by poxer, with love :-*
-
-#include <a_samp> 			// by SA:MP Dev Team ♥
-#include <fixes>			// by SA:MP Community (am i rite?) ♥
-#include <zcmd>      		// by Zeex ♥
-#include <sscanf2>   		// by Y_Less ♥ 
-#include <easyDialog> 		// by Emmet_ ♥
-//#include <streamer> 		// by Incognito ♥
-#include <strlib> 			// by Slice ♥
-#include <crashdetect> 		// by 0x5A656578 ♥
+ 			// by SA:MP Dev Team ♥
+#include <fixes>
+#include <zcmd>
+#include <sscanf2>
+#include <easyDialog>
+//#include <streamer> 
+#include <strlib>
+#include <crashdetect> 
 
 new aPWD[]="123456"; // The admin password. It's highly recommended to change this. Try using 10 characters as maximum.
 
