@@ -1,5 +1,6 @@
 // Scripted by poxer, with love :-*
- 			// by SA:MP Dev Team ♥
+
+#include <a_samp>
 #include <fixes>
 #include <zcmd>
 #include <sscanf2>
