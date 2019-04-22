@@ -1,5 +1,3 @@
-// Scripted by poxer, with love :-*
-
 #include <a_samp>
 #include <fixes>
 #include <zcmd>
